@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"><title>Wind Hub</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<style>
+:root{--bg:#14151c;--fg:#f2f2f7;--card:rgba(255,255,255,.12);--bd:rgba(255,255,255,.2);--ac:#7c5cff;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+*{box-sizing:border-box}
+body{margin:0;min-height:100vh;background:var(--bg) center/cover fixed;color:var(--fg);font-family:system-ui,-apple-system,Segoe UI,sans-serif}
+.w{max-width:860px;margin:0 auto;padding:20px 16px 60px}
+header{display:flex;align-items:center;gap:14px;margin-bottom:22px}
+#pfp{width:64px;height:64px;border-radius:50%;object-fit:cover;background:var(--card);border:2px solid var(--bd);cursor:pointer}
+h1{font-size:1.4rem;margin:0}
+.glass{background:var(--card);border:1px solid var(--bd);border-radius:16px;backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)}
+form{display:flex;gap:8px;padding:8px;margin-bottom:20px}
+input,select,button{font:inherit;color:inherit}
+input[type=text]{flex:1;min-width:0;background:transparent;border:0;outline:0;padding:10px;color:var(--fg)}
+button{background:var(--ac);border:0;border-radius:10px;padding:9px 14px;cursor:pointer;color:#fff}
+button.g{background:var(--card);border:1px solid var(--bd)}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px}
+.tile{padding:18px 10px;text-align:center;cursor:pointer;transition:transform .15s}
+.tile:hover{transform:translateY(-3px)}
+.tile .e{font-size:2.2rem}.tile .n{margin-top:6px;font-weight:600}
+.opts{margin:16px 0;display:flex;align-items:center;gap:8px;font-size:.9rem}
+details{margin-top:22px;padding:14px}
+summary{cursor:pointer;font-weight:600}
+.row{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:12px}
+.row label{min-width:90px;font-size:.9rem}
+.row input[type=text]{background:rgba(0,0,0,.25);border-radius:8px;flex:1;min-width:140px}
+.note{font-size:.8rem;opacity:.75;margin-top:14px;line-height:1.4}
+@media (prefers-color-scheme:light){:root:not([data-theme=dark]){--bg:#e9ebf5;--fg:#16161d;--card:rgba(255,255,255,.6);--bd:rgba(0,0,0,.12)}input[type=text]{background:rgba(255,255,255,.4)!important}}
+</style></head><body>
+<div class="w">
+<header><img id="pfp" alt="Profile" title="Click to change picture"><div><h1 id="hi">Welcome</h1><small>Your launcher</small></div></header>
+<form class="glass" id="sf"><input type="text" id="q" placeholder="Search Google..." autocomplete="off"><button>Search</button></form>
+<div class="grid" id="grid"></div>
+<label class="opts"><input type="checkbox" id="blank"> Open inside an about:blank tab (Warning: Chromebook filters may block this)</label>
+
+<details class="glass"><summary>⚙️ Customize</summary>
+<div class="row"><label>Your name</label><input type="text" id="name" placeholder="Name"></div>
+<div class="row"><label>Profile pic</label><input type="file" id="pf" accept="image/*"></div>
+<div class="row"><label>Background</label><input type="color" id="bc" value="#14151c"><input type="file" id="bf" accept="image/*"><button class="g" id="br">Reset</button></div>
+<div class="row"><label>Tab title</label><input type="text" id="tt" placeholder="e.g. My Drive"></div>
+<div class="row"><label>Tab icon</label><input type="text" id="ti" maxlength="2" placeholder="📁" style="max-width:70px"><input type="file" id="tf" accept="image/*"></div>
+<div class="row"><label>Presets</label>
+<button class="g" data-t="Google Drive" data-i="📁">Drive</button>
+<button class="g" data-t="Google Docs" data-i="📄">Docs</button>
+<button class="g" data-t="Classroom" data-i="🎓">Classroom</button>
+<button class="g" data-t="New Tab" data-i="🌐">New Tab</button></div>
+<div class="row"><button id="ap">Apply tab profile</button></div>
+<p class="note">Everything saves in this browser only. Backgrounds and pictures are uploaded from your device.</p>
+</details>
+<p class="note">This is a launcher, not a true proxy. If a site is blocked on your network, this direct launcher will not unblock it.</p>
+</div>
+<script>
+// Chromebook-safe storage fallback
+const S={
+  get(k,d){try{const v=localStorage.getItem(k);return v===null?d:v}catch(e){return d}},
+  set(k,v){try{localStorage.setItem(k,v)}catch(e){}}
+};
+
+const SITES=[["YouTube","▶️","https://youtube.com"],["Roblox","🧱","https://roblox.com"],["Google","🔍","https://google.com"],["TikTok","🎵","https://tiktok.com"],["Undertale Yellow","💛","https://gamejolt.com"],["Eaglercraft","⛏️","https://eaglercraft.com"]];
+const \$=id=>document.getElementById(id);
+const grid=\$("grid");
+
+SITES.forEach(([n,e,u])=>{
+  const d=document.createElement("div");
+  d.className="tile glass";
+  d.innerHTML=`<div class="e">${e}</div><div class="n">${n}</div>`;
+  d.onclick=()=>go(u);
+  grid.appendChild(d);
+});
+
+function go(u){
+  // Chromebooks often completely lock down about:blank popups. 
+  // If checked, try it, but catch the fail.
+  if(\$("blank").checked){
+    try{
+      const w=window.open("about:blank","_blank");
+      if(w){
+        w.document.title=document.title;
+        w.document.body.style.cssText="margin:0;height:100vh";
+        w.document.body.innerHTML=`<iframe src="${u}" style="border:0;width:100%;height:100%"></iframe>`;
+        return;
+      }
+    }catch(e){}
+  }
+  
+  // Chromebook Safe Navigation Bypasses Pop-up Blocker
+  try {
+    const a = document.createElement("a");
+    a.href = u;
+    a.target = "_blank";
+    a.rel = "noopener";
+    a.click();
+  } catch(e) {
+    // Ultimate fallback: opens in the same tab if popups are completely forbidden
+    window.location.href = u;
+  }
+}
+
+\$("sf").onsubmit=e=>{e.preventDefault();const q=\$("q").value.trim();if(q)go("https://google.com/search?q="+encodeURIComponent(q))};
+const read=(f,cb)=>{const r=new FileReader();r.onload=()=>cb(r.result);r.readAsDataURL(f)};
+const DEF="data:image/svg+xml,"+encodeURIComponent('<svg xmlns="http://w3.org" viewBox="0 0 64 64"><rect width="64" height="64" fill="#7c5cff"/><text x="32" y="44" font-size="34" text-anchor="middle">🙂</text></svg>');
+
+function loadAll(){
+  \$("pfp").src=S.get("pfp",DEF);
+  const nm=S.get("name","");("name").value=nm;("hi").textContent=nm?"Hey, "+nm:"Welcome";
+  const bi=S.get("bgimg",""),bc=S.get("bgc","");
+  document.body.style.backgroundImage=bi?`url("${bi}")`:"none";
+  if(bc){document.body.style.backgroundColor=bc;\$("bc").value=bc}
+  \$("blank").checked=S.get("blank","0") === "1";
+  const t=S.get("tt",""),i=S.get("ti",""),ti=S.get("tif","");
+  ("tt").value=t;("ti").value=i;
+  if(t)document.title=t;
+  if(ti)fav(ti);else if(i)fav("data:image/svg+xml,"+encodeURIComponent(`<svg xmlns="http://w3.org" viewBox="0 0 64 64"><text x="32" y="50" font-size="52" text-anchor="middle">${i}</text></svg>`));
+}
+
+function fav(h){let l=document.querySelector("link[rel~=icon]");if(!l){l=document.createElement("link");l.rel="icon";document.head.appendChild(l)}l.href=h}
+("pfp").onclick=()=>("pf").click();
+\$("pf").onchange=e=>e.target.files[0]&&read(e.target.files[0],d=>{S.set("pfp",d);loadAll()});
+\$("name").oninput=e=>{S.set("name",e.target.value);loadAll()};
+\$("bc").oninput=e=>{S.set("bgc",e.target.value);loadAll()};
+\$("bf").onchange=e=>e.target.files[0]&&read(e.target.files[0],d=>{S.set("bgimg",d);loadAll()});
+\$("br").onclick=()=>{S.set("bgimg","");S.set("bgc","");location.reload()};
+\$("blank").onchange=e=>S.set("blank",e.target.checked?"1":"0");
+\(("tf").onchange=e=>e.target.files[0]&&read(e.target.files[0],d=>{S.set("tif",d);\)("ap").click()});
+document.querySelectorAll("[data-t]").forEach(b=>b.onclick=()=>{\$("tt").value=b.dataset.t;("ti").value=b.dataset.i;S.set("tif","");("ap").click()});
+("ap").onclick=()=>S.set("tt",("tt").value);S.set("ti",("ti").value);if(("ti").value)S.set("tif","");loadAll()};
+
+loadAll();
+</script></body></html>
